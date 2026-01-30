@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日菜单 - 我们的美食记录</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🍽️ 每日菜单</h1>
+                <p class="login-subtitle">请登录以使用菜单功能</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="login-username">用户名：</label>
+                    <input type="text" id="login-username" value="好好吃饭" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">密码：</label>
+                    <input type="password" id="login-password" placeholder="请输入密码" required>
+                </div>
+                <div id="login-error" class="login-error" style="display:none;"></div>
+                <button type="submit" class="login-btn">登录</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app-container" class="app-container" style="display:none;">
+    <div class="container">
+        <header>
+            <h1>🍽️ 每日菜单</h1>
+            <p class="subtitle">记录我们的每一餐</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="today" onclick="switchTab('today', this)">今日点菜</button>
+            <button class="tab-btn" data-tab="dishes" onclick="switchTab('dishes', this)">菜品管理</button>
+            <button class="tab-btn" data-tab="history" onclick="switchTab('history', this)">历史记录</button>
+            <button class="tab-btn" data-tab="export" onclick="switchTab('export', this)">导出数据</button>
+        </nav>
+
+        <!-- 今日点菜标签页 -->
+        <div class="tab-content active" id="today-tab">
+            <div class="date-selector">
+                <label for="menu-date">选择日期：</label>
+                <input type="date" id="menu-date" value="">
+            </div>
+
+            <!-- 菜品浏览区域 -->
+            <div class="dishes-browse-section">
+                <div class="dishes-browse-header">
+                    <h2>浏览菜品</h2>
+                    <button class="toggle-dishes-btn" id="toggle-dishes-btn" onclick="toggleDishesList()" title="展开/折叠菜品列表">
+                        <span class="arrow-down">▼</span>
+                    </button>
+                </div>
+                <div class="dishes-grid" id="dishes-grid"></div>
+            </div>
+
+            <!-- 已点菜品汇总 -->
+            <div class="order-summary-section">
+                <h2>已点菜品</h2>
+                <div class="order-items" id="order-items"></div>
+            </div>
+
+            <!-- 营养汇总 -->
+            <div class="nutrition-summary-section" id="nutrition-summary-section">
+                <h2>营养汇总</h2>
+                <div class="nutrition-summary-content" id="nutrition-summary-content"></div>
+            </div>
+        </div>
+
+        <!-- 菜品管理标签页 -->
+        <div class="tab-content" id="dishes-tab">
+            <div class="dishes-header">
+                <h2>我的菜品库</h2>
+                <button class="add-dish-btn" onclick="openDishModal()">+ 添加新菜品</button>
+            </div>
+            <div class="dishes-list" id="dishes-list"></div>
+        </div>
+
+        <!-- 历史记录标签页 -->
+        <div class="tab-content" id="history-tab">
+            <div class="filter-section">
+                <label for="start-date">开始日期：</label>
+                <input type="date" id="start-date">
+                <label for="end-date">结束日期：</label>
+                <input type="date" id="end-date">
+                <button class="filter-btn" onclick="filterHistory()">筛选</button>
+                <button class="filter-btn" onclick="clearFilter()">清除</button>
+            </div>
+            <div class="history-list" id="history-list"></div>
+        </div>
+
+        <!-- 导出数据标签页 -->
+        <div class="tab-content" id="export-tab">
+            <div class="export-section">
+                <h2>导出菜单记录</h2>
+                <div class="export-options">
+                    <label for="export-start-date">开始日期：</label>
+                    <input type="date" id="export-start-date">
+                    <label for="export-end-date">结束日期：</label>
+                    <input type="date" id="export-end-date">
+                </div>
+                <div class="export-buttons">
+                    <button class="export-btn" onclick="exportToCSV()">导出为 CSV</button>
+                    <button class="export-btn" onclick="exportToExcel()">导出为 Excel</button>
+                    <button class="export-btn" onclick="exportToJSON()">导出为 JSON</button>
+                </div>
+                <div class="export-preview" id="export-preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加菜品模态框 -->
+    <div class="modal" id="meal-modal">
+        <div class="modal-content large-modal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>添加菜品</h2>
+            <form id="meal-form">
+                <div class="form-group">
+                    <label for="meal-name">菜品名称：</label>
+                    <div class="input-with-button">
+                        <input type="text" id="meal-name" required placeholder="例如：宫保鸡丁" list="dish-list">
+                        <datalist id="dish-list"></datalist>
+                        <button type="button" class="select-dish-btn" onclick="showDishSelector()">从菜品库选择</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>原材料：</label>
+                    <div class="ingredients-list" id="ingredients-list"></div>
+                    <button type="button" class="add-ingredient-btn" onclick="addIngredientRow()">+ 添加原材料</button>
+                </div>
+                <div class="form-group">
+                    <label for="meal-note">备注：</label>
+                    <textarea id="meal-note" rows="3" placeholder="例如：很辣，很好吃"></textarea>
+                </div>
+                <div class="nutrition-preview" id="nutrition-preview"></div>
+                <div class="form-buttons">
+                    <button type="button" class="save-draft-btn" onclick="saveDraft()">保存草稿</button>
+                    <button type="submit" class="save-btn">保存</button>
+                    <button type="button" class="cancel-btn" onclick="closeModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 菜品管理模态框 -->
+    <div class="modal" id="dish-modal">
+        <div class="modal-content large-modal">
+            <span class="close" onclick="closeDishModal()">&times;</span>
+            <h2 id="dish-modal-title">添加新菜品</h2>
+            <form id="dish-form">
+                <div class="form-group">
+                    <label for="dish-name">菜品名称：</label>
+                    <input type="text" id="dish-name" required placeholder="例如：宫保鸡丁">
+                </div>
+                <div class="form-group">
+                    <label>原材料：</label>
+                    <div class="ingredients-list" id="dish-ingredients-list"></div>
+                    <button type="button" class="add-ingredient-btn" onclick="addDishIngredientRow()">+ 添加原材料</button>
+                </div>
+                <div class="form-group">
+                    <label for="dish-image">菜品图片：</label>
+                    <input type="file" id="dish-image" accept="image/*" onchange="handleImageUpload(event)">
+                    <div class="image-preview-container" id="dish-image-preview"></div>
+                </div>
+                <div class="form-group">
+                    <label for="dish-note">做法：</label>
+                    <textarea id="dish-note" rows="3" placeholder="例如：1. 将鸡肉切丁；2. 热锅下油；3. 炒制..."></textarea>
+                </div>
+                <div class="nutrition-preview" id="dish-nutrition-preview"></div>
+                <div class="form-buttons">
+                    <button type="button" class="save-draft-btn" onclick="saveDishDraft()">保存草稿</button>
+                    <button type="button" class="save-btn" onclick="event.preventDefault(); saveDish(); return false;">保存</button>
+                    <button type="button" class="cancel-btn" onclick="closeDishModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 菜品选择器模态框 -->
+    <div class="modal" id="dish-selector-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDishSelector()">&times;</span>
+            <h2>选择菜品</h2>
+            <div class="dish-selector-list" id="dish-selector-list"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <script src="nutrition-db.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
